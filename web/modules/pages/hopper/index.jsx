@@ -31,20 +31,17 @@ export default class Hopper extends BaseComponent {
       clearTimeout(this.timeout);
       if (this.state.isProfit) {
         this.getData('revenue/countries');
+        this.getData('profit/topbrands');
       } else {
         this.getData('counts/countries');
+        this.getData('counts/topbrands');
       }
     }, 60000);
 
     this.chartTimer = setInterval(() => {
       this.setState({
         isProfit :  !this.state.isProfit
-      }, () =>{
-        if (this.state.isProfit) {
-          this.getData('profit/topbrands');
-        } else {
-          this.getData('counts/topbrands');
-        }
+      }, () => {
         this.getData('days');
       });
     }, 300000);
@@ -61,7 +58,12 @@ export default class Hopper extends BaseComponent {
       let graphData = [];
       for (var key in results.days) {
         if (key !== '2016-03-01' && key !== '2016-03-07') {
-          let data = [moment(key).toDate(), results.days[key]['clicks'], results.days[key]['conversions'], results.days[key]['impressions']];
+          let data = [];
+          if (this.state.isProfit) {
+            data = [moment(key).toDate(), results.days[key]['payout_cents'], results.days[key]['profit_cents'], results.days[key]['revenue_cents']];
+          } else {
+            data = [moment(key).toDate(), results.days[key]['clicks'], results.days[key]['conversions'], results.days[key]['impressions']];
+          }
           graphData.push(data);
         }
       }
@@ -98,16 +100,17 @@ export default class Hopper extends BaseComponent {
         display: 'flex',
         flexWrap: 'wrap',
         flexDirection: 'row',
-        height: '89vh',
-        width: '99vw',
-        overflow: 'hidden'
       }
     };
 
     var options = {
-      title: this.state.isProfit ? 'Revenue & Payout' : 'Clicks, Conversions & Impressions',
       hAxis: {title: 'Days'},
-      vAxis: {title: 'Metrics'}
+      vAxis: {title: this.state.isProfit ? 'Profit (cents)' : 'Counts'},
+      backgroundColor : {
+        fill : '#F5F6F7',
+        opacity : 0
+      },
+      legend: 'top'
     };
 
     var graphColumns = [
@@ -116,12 +119,12 @@ export default class Hopper extends BaseComponent {
         type  : 'date'
       },
       {
-  			label : 'Clicks',
-  			type  : 'number'
-  		},
-  		{
-  			label : 'Conversions',
-  			type: 'number'
+        label : 'Clicks',
+        type  : 'number'
+      },
+      {
+        label : 'Conversions',
+        type: 'number'
       },
       {
         label : 'Impressions',
@@ -143,38 +146,42 @@ export default class Hopper extends BaseComponent {
       colorAxis : {
         minValue  : 0,
         colors    : ['#E6F2FF', '#001C3D']
+      },
+      backgroundColor : {
+        fill : '#F5F6F7',
+        opacity : 0
       }
     };
 
     return (
       <Page>
-        <div>
-          <div style={STYLES.table}>
-            <div style={{flex: '0.4', border: '1px solid black'}}>
-              <Table items={this.state.chartData} />
+        <div style={STYLES.table}>
+          <div style={{flex: '0.65', border: '0px solid black', display: 'flex', flexDirection: 'column'}}>
+            <h3 style={{margin: '10px'}}>Top Performers by {this.state.isProfit ? 'Profit' : 'Total Events'}</h3>
+            <Table items={this.state.chartData} />
+          </div>
+          <div style={{display: 'flex', flex: '1', flexDirection: 'column', border: '0px solid black'}}>
+            <div style={{flex: '1'}}>
+              <h3 style={{margin: '10px'}}>{this.state.isProfit ? 'Profits' : 'Events'} Around the World</h3>
+              <Chart
+                chartType='GeoChart'
+                rows={this.state.mapData}
+                columns={mapColumns}
+                options={mapOptions}
+                graph_id='geo_chart'
+                width={'100%'}
+                legend_toggle={true} />
             </div>
-            <div style={{display: 'flex', flex: '1', flexDirection: 'column', border: '1px solid black'}}>
-              <div style={{flex: '1', margin: '20px'}}>
-                <h3>World Map - Total Events</h3>
-                <Chart
-                  chartType='GeoChart'
-                  rows={this.state.mapData}
-                  columns={mapColumns}
-                  options={mapOptions}
-                  graph_id='geo_chart'
-                  width={'100%'}
-                  legend_toggle={true} />
-              </div>
-              <div style={{flex: '1', margin: '20px'}}>
-                <Chart
-                  chartType='LineChart'
-                  rows={this.state.graphData}
-                  columns={graphColumns}
-                  options={options}
-                  graph_id='LineChart'
-                  width={'100%'}
-                  legend_toggle={true} />
-              </div>
+            <div style={{flex: '1'}}>
+              <h3 style={{margin: '10px'}}>Last 30 Days - {this.state.isProfit ? 'Finance Report' : 'Events Report'}</h3>
+              <Chart
+                chartType='LineChart'
+                rows={this.state.graphData}
+                columns={graphColumns}
+                options={options}
+                graph_id='LineChart'
+                width={'100%'}
+                legend_toggle={true} />
             </div>
           </div>
         </div>

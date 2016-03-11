@@ -4,11 +4,14 @@ import {autobind} from 'lib/decorators';
 import Header from 'txl/header/Header';
 import {LAYER_2} from '../../../styles/layers';
 import {combineStyles} from 'txl/styles/helpers';
+import moment from 'moment';
 
 @autobind
 export default class AppHeader extends BaseComponent {
   constructor(props) {
     super(props);
+
+    this.date = moment().format('LL');
   }
 
   render() {
@@ -32,7 +35,7 @@ export default class AppHeader extends BaseComponent {
           product='TMC'
           logo={{}}
           title={hopper}
-          client={hopperMsg}>
+          client={this.date}>
         </Header>
       </div>
     );

@@ -38,15 +38,15 @@ class Table extends React.Component {
           })
           .map((thing, key) => {
             return (
-              <tr key={key}>
-                <td>{thing.get('rank')}</td>
-                <td>{
+              <div key={key} style={rowStyle}>
+                <div style={{flex: '0 0 10%', textAlign: 'center'}}>{thing.get('rank')}</div>
+                <div style={{flex: '1 0 auto', textAlign: 'center'}}>{
                   brands.find(item => {
-                    return item.get('id') ===thing.get('id');
+                    return item.get('id') === thing.get('id');
                   }).get('network_name')
-                }</td>
-                <td>{thing.get('data')}</td>
-              </tr>
+                }</div>
+                <div style={{flex: '0 0 15%', textAlign: 'center'}}>{thing.get('data')}</div>
+              </div>
             );
           });
 
@@ -61,12 +61,20 @@ class Table extends React.Component {
     let tableTitle = this.props.isProfit ? 'Profit' : 'Total Events';
 
     return (
-      <table>
-        <thead><tr><td>Top Performers by Total Events</td></tr></thead>
-        <tbody>{this.state.renderedItems}</tbody>
-      </table>
+      <div style={{display: 'flex', flexDirection: 'column', flex: '1 0 auto'}}>
+        <div style={{flex: '1', display: 'flex', flexDirection: 'column'}}>
+          <div style={{backgroundColor: '#37455b', color: '#ffffff', ...rowStyle}}>
+            <div style={{flex: '0 0 10%', textAlign: 'center'}}>Rank</div>
+            <div>Network</div>
+            <div style={{flex: '0 0 15%', textAlign: 'center'}}>{this.props.isProfit ? 'Profit (USD)' : 'Count'}</div>
+          </div>
+          {this.state.renderedItems}
+        </div>
+      </div>
     )
   }
 }
+
+let rowStyle = {display: 'flex', justifyContent: 'space-between', alignItems: 'center', flex: '1'};
 
 export default Table;
