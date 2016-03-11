@@ -1,0 +1,327 @@
+@import '~styles/variables';
+@import '~styles/mixins';
+
+.table-wrapper {
+  display: flex;
+  flex: 1 0 auto;
+  flex-direction: column;
+  position: relative;
+  z-index: 0;
+  justify-content: flex-start;
+}
+.table-content {
+  .drop-shadow-2;
+  background-color: @ps-0;
+  position: relative;
+
+  &.loading {
+    min-height: 400px;
+  }
+}
+
+// FittedTable class
+.fitted-wrapper {
+  color: @ps-800;
+  height: auto;
+  width: auto;
+
+  .public_fixedDataTable_main {
+    border: none;
+  }
+
+  // row styles
+  .fixedDataTable_rowsContainer {
+    border-bottom: 1px solid @ps-100;
+  }
+
+  .fixedDataTableRow_rowWrapper {
+    &:hover {
+      .fixedDataTableCellGroup_cellGroup {
+        background-color: @ps-50;
+      }
+
+      .row-icons {
+        li {
+          opacity: 1;
+        }
+      } // .row-icons
+    } // &:hover
+  } // .fixedDataTableRow_rowWrapper
+
+  .public_fixedDataTableRow_main,
+  .public_fixedDataTableRow_highlighted {
+    &,
+    .public_fixedDataTableCell_main {
+      background-color: transparent;
+    }
+  } //.public_fixedDataTableRow_main, .public_fixedDataTableRow_highlighted
+
+  .fixedDataTableCellGroup_cellGroup {
+    background-color: @ps-0;
+    overflow: visible;
+  }
+
+  // remove default shadow
+  .fixedDataTable_shadow {
+    background: 0;
+  }
+
+  // table header
+  .public_fixedDataTable_header {
+    &,
+    .public_fixedDataTableCell_main {
+      background-color: @ps-600;
+      background-image: none;
+      border-bottom-width: 0;
+      border-right-color: @ps-0;
+      color: @ps-0;
+      font-weight: @font-weight-base;
+      overflow: visible;
+    }
+
+    .public_fixedDataTableCell_alignRight {
+      text-align: left;
+    }
+
+    .fixedDataTableCellGroup_cellGroup,
+    .public_fixedDataTableCell_wrap1 {
+      overflow: visible;
+    }
+  } // .public_fixedDataTable_header
+
+  // cell styles
+  .public_fixedDataTableCell_main {
+    border-bottom-color: @ps-100;
+    border-right-color: transparent;
+    border-width: 0 1px 1px 0;
+
+    &:last-child {
+      border-right-width: 0;
+    }
+  }
+
+  .public_fixedDataTableCell_cellContent {
+    display: inline-block;
+    padding: 0 (@grid-unit * 4px) 0 (@grid-unit * 2px);
+  }
+
+  // scrollbar
+  .fixedDataTable_horizontalScrollbar,
+  .public_Scrollbar_mainHorizontal.Scrollbar_mainActive,
+  .public_Scrollbar_mainHorizontal:hover {
+    height: 15px;
+  }
+
+  .public_Scrollbar_mainVertical {
+    &,
+    &.Scrollbar_mainActive,
+    &:hover {
+      background-color: transparent;
+      width: 15px;
+    }
+  } // .public_Scrollbar_mainVertical
+
+  .fixedDataTable_horizontalScrollbar {
+    background-color: @ps-0;
+    position: relative;
+
+    .public_Scrollbar_mainHorizontal {
+      background-color: transparent;
+    }
+  } // .fixedDataTable_horizontalScrollbar
+
+  .Scrollbar_face:after {
+    background-color: @ps-200;
+    border-radius: 2px;
+    opacity: 0.5;
+  }
+
+  .Scrollbar_faceHorizontal:after {
+    bottom: 5px;
+    top: 5px;
+  }
+
+  .Scrollbar_faceVertical:after {
+    left: 5px;
+    right: 5px;
+  }
+
+  .public_Scrollbar_main:hover .Scrollbar_face:after {
+    background-color: @ps-200;
+  }
+} // .fitted-wrapper
+
+.data-cell-tpl {
+  align-items: center;
+  display: flex;
+  justify-content: space-between;
+  padding: 0 (@grid-unit * 2px);
+
+  .row-icons {
+
+    ul {
+      display: flex;
+      list-style: none;
+      margin-bottom: 0;
+    }
+
+    li {
+      .square(13px);
+      margin: 6px 6px 6px 11px;
+      opacity: 0;
+      position: relative;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+
+      & > a {
+        flex: 1;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+      }
+
+      i {
+        .square(13px);
+      }
+
+      svg path {
+        fill: @ps-300;
+      }
+
+      &:hover {
+        cursor: pointer;
+
+        svg path {
+          fill: @ps-600;
+        }
+      } // &:hover
+    } // li
+  } // .row-icons
+
+  &.is-pinned {
+    .row-icon-pinSolid {
+      opacity: 1;
+
+      svg path {
+        fill: @pr-600;
+      }
+
+      svg ellipse {
+        fill: @ps-0;
+      }
+
+      &:hover {
+        svg path {
+          fill: @pr-600;
+        }
+      }
+    }// .row-icon-star
+  } // &.is-pinned
+} // .data-cell-tpl
+
+.table-footer {
+  color: @ps-300;
+  padding: @vertical-spacing-base 0px;
+
+  .table-page-size-selector,
+  .table-page-selector {
+    display: flex;
+    align-items: center;
+  }
+
+  .table-page-selector {
+    & > span {
+      margin: 0 @horizontal-spacing-base;
+    }
+
+    & > form {
+      display: flex;
+      align-items: center;
+      margin: 0 30px;
+    }
+
+    input {
+      .square(25px);
+      background-color: transparent;
+      border: 0;
+      border-bottom: 1px solid @ps-300;
+      border-radius: 0;
+      margin-right: 0;
+      text-align: center;
+      text-indent: 0;
+    }
+
+    button {
+      margin-left: 10px;
+    }
+  } // .table-page-selector
+
+  .t-select-container {
+    min-width: 100px;
+    height: 35px;
+  }
+
+  .t-button-icon-only {
+    .square(25px);
+    background-color: @ps-100;
+    border: none;
+    color: @ps-800;
+
+    &:hover:not([disabled]):not(.disabled) {
+      background-color: @ps-200;
+      border: 0;
+      color: @ps-800;
+
+      svg * {
+        fill: @ps-800;
+      }
+    }
+
+    i.t-icon {
+      .square(25px);
+      left: 0;
+      top: 0;
+    }
+
+    svg * {
+      fill: @ps-800;
+    }
+  }
+
+  .icon {
+    .square(25px);
+  }
+
+  & > div {
+    display: flex;
+    justify-content: space-between;
+  }
+} // .table-footer
+
+.select-menu-up {
+  .Select-menu-outer {
+    border-radius: 2px 2px 0 0;
+    bottom: calc(100% + 5px);
+    margin-top: 0;
+    top: auto;
+  }
+
+  .is-open > .Select-control {
+    border-radius: 0 0 2px 2px;
+  }
+} // .select-menu-up
+
+.sort-selector {
+  &.sort-asc {
+    svg g path:first-child {
+      opacity : 0.5;
+    }
+  }
+
+  &.sort-desc {
+    svg g path:last-child {
+      opacity : 0.5;
+    }
+  }
+}

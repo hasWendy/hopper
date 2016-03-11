@@ -1,0 +1,84 @@
+@import "variables";
+@import "mixins";
+@import "common/globals";
+@import "common/typography";
+@import "common/forms";
+@import "common/overrides";
+
+#appContent,
+.page {
+  min-height: 100vh;
+}
+
+.page {
+  display: flex;
+  align-items: flex-end;
+}
+
+.t-content-wrapper {
+  flex: 1;
+  height: calc(100vh - @chrome-header-height);
+}
+
+#main {
+  color: @ps-800;
+  min-width: 1000px;
+
+  .t-viewport {
+    display: flex;
+    overflow: auto;
+    padding: 0;
+    background: @ps-50;
+
+    a {
+      color: @pr-600;
+    }
+
+    &,
+    & .fitted-page {
+      display: flex;
+      flex: 1;
+      flex-direction: column;
+    }
+  }
+}
+
+.t-panel-header {
+  display: flex;
+  flex-shrink: 0;
+  justify-content: space-between;
+}
+
+.t-viewport-content {
+  display: flex;
+  flex: 1;
+  margin: 0 4rem;
+}
+
+.t-pane {
+  flex: 1 0 auto;
+}
+
+.t-pane-action-buttons {
+  margin: 4rem 0;
+}
+
+.t-paper {
+  .t-paper-piece {
+    padding: 20px;
+  }
+
+  .t-card {
+    border: none;
+  }
+} // .t-paper
+
+.codeStyle {
+  color: @ps-300;
+  font-family: monospace;
+  font-size: @font-size-down-2;
+}
+
+.requiredLabel {
+  color: #ff5957;
+}

@@ -1,0 +1,51 @@
+// this is to ensure the main app container doesn't have a scroll bounce
+html, body {
+  // background: #E6E6E6;
+  font-family: @font-family-base;
+  font-size: @font-size-base;
+  font-weight: @font-weight-base;
+  // height: 100vh;
+  // max-height: 100vh;
+  max-width: 100vw;
+  width: 100vw;
+}
+
+::-moz-selection {
+  background-color: '#D4EDFF';
+}
+
+::selection {
+  background-color: '#D4EDFF';
+}
+
+a {
+  color: @pr-600;
+}
+
+ul, li {
+  list-style-type: none;
+  margin: 0;
+  padding: 0;
+}
+
+textarea {
+  resize: none;
+}
+
+// @todo  move this when fixing icons for:
+// https://jira.corp.tune.com/browse/TPC-49
+i.icon, i.t-icon {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  transition: all 250ms;
+  .square(5rem);
+
+  svg {
+    .square(13px);
+  }
+}
+
+input[type='text'] {
+  height: 6rem;
+}

@@ -1,0 +1,21 @@
+// Elevation and Shadows
+.drop-shadow(@offsetX, @offsetY, @blur, @opacity) {
+  box-shadow: @offsetX @offsetY @blur fade(@ps-900, @opacity);
+  filter: progid:DXImageTransform.Microsoft.dropshadow(OffX=@offsetX, OffY=@offsetY, Color=@ps-900);
+}
+
+.drop-shadow-1 {
+  .drop-shadow(0, 2px, 2px, 20%);
+}
+
+.drop-shadow-2 {
+  .drop-shadow(0, 2px, 2px, 30%);
+}
+
+.drop-shadow-3 {
+  .drop-shadow(0, 4px, 4px, 40%);
+}
+
+.drop-shadow-4 {
+  .drop-shadow(0, 6px, 6px, 50%);
+}

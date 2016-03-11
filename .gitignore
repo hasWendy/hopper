@@ -1,0 +1,67 @@
+**/*.pyc
+
+# Temporary server directory contents
+log/
+cache/
+tmp/
+ephemeral/
+
+# PHP Storm Project Files
+.idea/
+*.iml
+
+*.orig
+
+# Mac Finder files
+.DS_Store
+._.DS_Store
+
+# vim
+*.swp
+
+# Logs
+access_log
+error_log
+
+# Dependency detritus
+bower_components
+node_modules
+
+docs/
+build/
+
+**/*.log
+
+*.bak
+
+build_latest.version
+web/assetManifest.js
+
+web/css/main.css
+web/css/app_loader.css
+web/css/maticons.css
+web/css/*.min.css
+
+server/lib/mysql/connection_info.json
+server/assetManifest.json
+
+web/compiled.js
+web/compiled.map
+web/modules/compiled.*
+web/*.min.js
+web/*.bundled.js
+web/*.gz
+
+
+web/css/loader.css
+web/templates.js
+web_test/assetManifest.json
+web/bundled.js
+web_test/specs.compiled.js
+
+config.json
+ho_ips.json
+atlassian-ide-plugin.xml
+web/prod.delphi.css
+
+.jshintrc

@@ -1,0 +1,102 @@
+---
+team: 'tpc_fn'
+project: 'tune-partner-portal'
+repository: 'git@github.com:Adapp/partners_app.git'
+
+app:
+  build: './'
+  test: './test/'
+
+registries:
+  tune_development: &default_registry
+    address: 'https://docker-dev.ops.tune.com'
+    verify: false
+  tune_production:
+    address: "https://o-pregister-sea1.ops.tune.com"
+    sslCertPath: "/etc/docker/certs/registry/build"
+    verify: false
+    auth:
+      type: "registry_rubber"
+      address: "https://o-regrubber-sea1.ops.tune.com"
+      sslCertPath: "/etc/docker/certs/registry/build"
+      verify: false
+  default: *default_registry
+
+environments:
+
+  # hosts
+  local: &local
+    address: 'https://192.168.99.100:2376'
+    sslCertPath: '/Users/josh/.docker/machine/machines/tune-partner-portal'
+    verify: false
+  jenkins_sta: &jenkins_sta
+    address: 'https://dh-jenkins-docker02-dev.sea3.office.priv:2376'
+    sslCertPath: '/etc/docker/certs/client/staging/'
+    verify: false
+  jenkins_prod: &jenkins_prod
+    address: 'https://sea3-jenkins-docker51.sea3.office.priv:2376'
+    sslCertPath: '/etc/docker/certs/client/production/'
+    verify: false
+  partnersapp_sta: &partnersapp_sta
+    address: 'https://h-partnerapp01-sta.use01.ho.priv:2376'
+    sslCertPath: '/etc/docker/certs/client/staging/'
+    verify: false
+  partnersapp_prod: &partnersapp_prod
+    - address: 'https://h-partnerapp01.use01.ho.priv:2376'
+      sslCertPath: '/etc/docker/certs/client/production/'
+      verify: false
+    - address: 'https://h-partnerapp02.use01.ho.priv:2376'
+      sslCertPath: '/etc/docker/certs/client/production/'
+      verify: false
+
+  development:
+    local:
+      hosts:
+        default:
+          - *local
+      deploy:
+        app:
+          image: tune_development/tpc_fn/tune-partner-portal-app:josh-development-latest
+          ports:
+            - "80:80"
+
+  staging:
+    use01:
+      hosts:
+        default:
+          - *partnersapp_sta
+        export:
+          - *jenkins_sta
+      deploy:
+        app:
+          image: tune_development/tpc_fn/tune-partner-portal-app:use01-staging-latest
+          ports:
+            - "80:80"
+
+  production:
+    app:
+      export_to: 'tune_production'
+      # log_config:
+      #   type: 'syslog'
+      #   config:
+      #     syslog-tag: 'tune-partner-portal'
+      #     syslog-facility: 'local0'
+    use01:
+      hosts:
+        default:
+          *partnersapp_prod
+        export:
+          - *jenkins_prod
+      export:
+        app:
+          # pull most recent stage image
+          image: tune_development/tpc_fn/tune-partner-portal-app:use01-staging-latest
+          ports:
+            - "80:80"
+      deploy:
+        app:
+          # push image to production
+          image: tune_production/tpc_fn/tune-partner-portal-app:use01-production-latest
+          detach: true
+          ports:
+            - "80:80"

@@ -1,0 +1,32 @@
+// @todo  move these styles to a global definition file
+.t-panel {
+  background: #fff;
+  border-radius: @border-radius-base;
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  
+  .t-panel-header {
+    font-weight: 100;
+    flex-shrink: 0;
+    padding: 2rem 4rem 0;
+  }
+}
+
+.t-tabs {
+  align-items: center;
+  border-bottom: 1px solid @color-border-base;
+  display: flex;
+  justify-content: flex-start;
+  
+  li {
+    color: @color-black-50;
+    font-weight: 100;
+    padding: 1rem 4rem;
+  }
+  
+  li.active {
+    border-bottom: 2px solid @color-primary-base;
+    color: @color-primary-base;
+  }
+}
