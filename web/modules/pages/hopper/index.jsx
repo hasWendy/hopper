@@ -51,9 +51,9 @@ export default class Hopper extends BaseComponent {
   }
 
   getData(query) {
-    $.get('http://dh-hillaryp01-dev.sea3.office.priv:8080/'+query, function (results) {
+    $.get('http://hil-dev:8080/' + query, (results) => {
       this._handleData(query, results);
-    }.bind(this));
+    });
   }
 
   _handleData(query, results) {
@@ -61,17 +61,22 @@ export default class Hopper extends BaseComponent {
       let graphData = [];
       for (var key in results.days) {
         if (key !== '2016-03-01' && key !== '2016-03-07') {
-          let data = [moment(key), results.days[key]['clicks'], results.days[key]['conversions'], results.days[key]['impressions']];
+          let data = [moment(key).toDate(), results.days[key]['clicks'], results.days[key]['conversions'], results.days[key]['impressions']];
           graphData.push(data);
         }
       }
 
       this.setState({ graphData });
     } else if (query.includes('topbrands')) {
-      let chartData = [];
+      let chartData = imm.Map();
       for (var i = 0; i < results.top_25_brands.length; i++) {
-        let brand = [i+1, results.top_25_brands[i].id, results.top_25_brands[i].count];
-        chartData.push(brand);
+        let id = results.top_25_brands[i].id;
+        let brand = imm.Map({
+          rank: i+1,
+          id: id,
+          data: results.top_25_brands[i].count
+        });
+        chartData = chartData.set(id.toString(), brand);
       }
 
       this.setState({ chartData });

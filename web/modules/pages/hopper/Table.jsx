@@ -1,35 +1,53 @@
 import React, {Component} from 'react';
-import brands from './brands.js';
+import SelfApi from 'lib/api/selfApi';
 
 class Table extends React.Component {
+  constructor() {
+    super();
+    this.state = {
+      renderedItems: {}
+    }
+  }
+  getData(ids) {
+    return SelfApi.post({'endpoint': 'brands'}, ids);
+  }
+
+  componentWillReceiveProps(nextProps) {
+    if (nextProps.items.size) {
+      this.renderItems();
+    }
+  }
+
   renderItems() {
     let output = [];
     let {items} = this.props;
-    for(var key in items) {
-      // let name = '';
-      // console.log(brands['data']);
-      // for (var key in brands['data']) {
-      //   console.log(key);
-      // }
-      let topBrand = brands['data'].map((brandData) => {
-        return brandData['id'] === items[key][1];
-        // if (brand['id'] === items[key][1]) {
-        //   console.log(brand);
-        //
-        //   name = brand['network_name'];
-        // }
-      });
+    let ids = items.map(item => {
+      return item.get('id');
+    });
 
-      // console.log(name);
-      output.push(
-        <tr key={key}>
-          <td>{items[key][0]}</td>
-          <td>{topBrand['network_name']}</td>
-          <td>{items[key][2]}</td>
-        </tr>
-      )
+    if (ids.size) {
+      this.getData({ids: ids}).then((data) => {
+        // data is an Immutable.js object
+        let brands = data.get('result');
+        output = brands.map((item, key) => {
+          let brandStats = items.get(item.get('id').toString());
+
+          return (
+            <tr key={key}>
+              <td>{brandStats.get('rank')}</td>
+              <td>{item.get('network_name')}</td>
+              <td>{brandStats.get('data')}</td>
+            </tr>
+          );
+        });
+
+        this.setState({renderedItems: output}, () => {
+          console.log(this.state.renderedItems);
+        });
+      }).catch((err) => {
+        console.log('err:', err);
+      });
     }
-    return output;
   }
 
   render() {
@@ -38,7 +56,7 @@ class Table extends React.Component {
     return (
       <table>
         <thead><tr><td>Top Performers by Total Events</td></tr></thead>
-        <tbody>{this.renderItems()}</tbody>
+        <tbody>{this.state.renderedItems}</tbody>
       </table>
     )
   }

@@ -25,31 +25,10 @@ module.exports = function(router) {
       session_token : req.session.session_token
     };
 
-    if (!templateParams.session_token || !templateParams.ad_network_id) {
-      return res.redirect('/auth/logout?' + Math.round(Math.random() * 10000));
-    }
-
     res.type('html');
 
-    // We don't want to check for session token validity every single request.  So there's a sensible
-    // debounce of 1 hour between checks.  In the odd event that the session is canceled from outside of this app
-    // we'll not really have an issue, the user flow will still send them to the login screen.
-    if (!req.session.checkSessionTime || moment.unix(req.session.checkSessionTime).diff(moment(), 'seconds') <= 0) {
-      req.api.get('session/context/get_current', {})
-        .then(function(contextRes) {
-          if (contextRes.status_code !== 200) {
-            if (global.DEVELOPMENT) {
-              return res.redirect('/dev_login');
-            }
-            return res.redirect('/auth/logout?' + Math.round(Math.random() * 10000));
-          }
-          req.session.checkSessionTime = moment().add(1, 'hour').unix();
-          res.end(indexTemplate(templateParams));
-        });
-    } else {
-      // No need to stall, just go ahead and render that shiz.
-      res.end(indexTemplate(templateParams));
-    }
+    // No need to stall, just go ahead and render that shiz.
+    res.end(indexTemplate(templateParams));
 
 
   });
