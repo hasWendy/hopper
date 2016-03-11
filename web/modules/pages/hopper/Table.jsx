@@ -29,21 +29,28 @@ class Table extends React.Component {
       this.getData({ids: ids}).then((data) => {
         // data is an Immutable.js object
         let brands = data.get('result');
-        output = brands.map((item, key) => {
-          let brandStats = items.get(item.get('id').toString());
+        output = brands
+          .map((item, key) => {
+            return items.get(item.get('id').toString());
+          })
+          .sort((itemA, itemB) => {
+            return itemA.get('rank') < itemB.get('rank') ? -1 : 1;
+          })
+          .map((thing, key) => {
+            return (
+              <tr key={key}>
+                <td>{thing.get('rank')}</td>
+                <td>{
+                  brands.find(item => {
+                    return item.get('id') ===thing.get('id');
+                  }).get('network_name')
+                }</td>
+                <td>{thing.get('data')}</td>
+              </tr>
+            );
+          });
 
-          return (
-            <tr key={key}>
-              <td>{brandStats.get('rank')}</td>
-              <td>{item.get('network_name')}</td>
-              <td>{brandStats.get('data')}</td>
-            </tr>
-          );
-        });
-
-        this.setState({renderedItems: output}, () => {
-          console.log(this.state.renderedItems);
-        });
+        this.setState({renderedItems: output});
       }).catch((err) => {
         console.log('err:', err);
       });
