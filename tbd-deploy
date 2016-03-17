@@ -1,0 +1,252 @@
+#!/bin/bash
+
+BUILDBOX=${SSH_CLIENT/ *}
+GITROOT=`git rev-parse --show-toplevel`
+RESOURCES=docker
+OUTDIR=usr/bin
+CIAENV=~/.cia
+DOCKERPATH=/usr/local/bin
+TARGETS=h-stats01-sta-1b.use01.ho.priv
+ARGS=
+RUN=
+SUDO=
+CACHE=
+WIPE=
+NOENV=
+
+usage() {
+    echo \ "
+Script for building and deploying docker containers. Use with caution.
+Creates temp files and executes docker commands on build and target machines.
+
+Usage:   tbd-deploy [options] component1[:make targets[:branch]] component2[:t[:b]] ...
+
+    --buildbox      docker dev box or macbook, default \$SSH_CLIENT ($BUILDBOX)
+    --targets       comma delimited deployment targets, default $TARGETS
+    --files         directory with docker and cia files, default $RESOURCES
+    --outdir        output directory for binaries, default $OUTDIR
+    --env           path to cia environment variables, default $CIAENV
+    --dockerpath    path to docker binary on build machine, default $DOCKERPATH
+    --ports         pass port mapping to docker container, i.e. 8080:9090
+    --volumes       pass volume mapping to docker container, i.e. /data:/data
+    --run           if set, run containers after deployment
+    --sudo          if set, use sudo when calling docker on target machine
+    --cache         if set, retain images in temp directories for faster transfer
+    --wipe          if set, wipe temporary files on dev box and target machine then exit
+    --noenv         if set, skip cia file and pass vars as args to 'run' command
+    --help          print this message
+"
+    exit
+}
+
+getargs() {
+    OPTS=`getopt -o b:t:f:o:e:d:p:v:rscnwh --long \
+         buildbox:,targets:,files:,outdir:,env:,dockerpath:,ports:,volumes:,run,sudo,cache,noenv,wipe,help\
+         -n 'tbd-deploy' -- "$@"`
+    if [ $? != 0 ] ; then echo "Terminating..." >&2 ; exit 1 ; fi
+    eval set -- "$OPTS"
+    while true; do
+      case "$1" in
+        -b | --buildbox )   BUILDBOX="$2"; shift 2;;
+        -t | --targets )    TARGETS="$2"; shift 2;;
+        -f | --files )      RESOURCES="$2"; shift 2;;
+        -o | --outdir )     OUTDIR="$2"; shift 2;;
+        -e | --env )        CIAENV="$2"; shift 2;;
+        -d | --dockerpath ) DOCKERPATH="$2"; shift 2;;
+        -p | --ports )      ARGS="$ARGS -p $2"; shift 2;;
+        -v | --volumes )    ARGS="$ARGS -v $2"; shift 2;;
+        -r | --run )        RUN="yes"; shift ;;
+        -s | --sudo )       SUDO="sudo"; shift ;;
+        -c | --cache )      CACHE="yes"; shift ;;
+        -n | --noenv )      NOENV="yes"; shift ;;
+        -w | --wipe )       WIPE="yes"; shift ;;
+        -h | --help )       usage; shift;;
+        -- ) shift; break ;;
+        * )  break ;;
+      esac
+    done
+    COMPONENTS="$@"
+}
+
+if [ ! -f $CIAENV ]; then
+    echo "unable to read file $CIAENV with CIA variables, try running
+
+    echo export FOO=hello >> ~/.cia
+    echo export BAR=world >> ~/.cia
+"
+    exit
+fi
+
+getargs "$@"
+
+comps=
+declare -A images
+declare -A commits
+declare -A args
+buildtime=$(date -u +"%Y%m%d%H%M%S")
+
+# part 1 -- build the containers
+
+for component in $COMPONENTS; do
+    echo building $component
+    IFS=':' read -a params <<< "$component"
+    comp=${params[0]}
+    stuff=${params[1]}
+    branch=${params[2]}
+    comps="$comps $comp"
+    if [ "$WIPE" != "" ]; then
+        rm -vrf /tmp/build.$comp.$OUTDIR
+        continue
+    fi
+    mkdir -p /tmp/build.$comp.$OUTDIR
+    commits[$comp]=$(git log -n1 | head -1 | awk {print\$2} | cut -c1-7)
+    if [ "$stuff" != "" ]; then
+        pushd $GITROOT
+        current=`git rev-parse --abbrev-ref HEAD`
+        if [ "$branch" != "" ]; then
+            echo switching to branch $branch
+            git checkout $branch
+            commits[$comp]=$(git log -n1 | head -1 | awk {print\$2} | cut -c1-7)
+        fi
+        echo running make $stuff for $comp
+        GOBIN=/tmp/build.$comp.$OUTDIR make $stuff
+        if [ "$?" != "0" ]; then
+            echo errors during make
+            exit
+        fi
+        if [ "$branch" != "" ]; then
+            git checkout $current
+        fi
+        popd
+    fi
+
+    BFILE=/tmp/build.$comp.$OUTDIR/cia
+    CFILE=$RESOURCES/$comp-cia
+    DFILE=$RESOURCES/$comp-dockerfile
+    EFILE=$RESOURCES/$comp-entrypoint
+    TEMPDIR=`ssh $BUILDBOX mktemp -d /tmp/docker.build.XXXXXX`
+    echo created temp dir $TEMPDIR on $BUILDBOX
+
+    pushd $GITROOT
+    export LANG=C
+    echo "#!/bin/bash" > $BFILE
+    chmod 700 $BFILE
+    if [ "$NOENV" = "" ]; then
+        # inject cia env vars into cia binary
+        sort $CIAENV | join -t= - <(perl -nE 'say $1 if /(export \w+)=.*{{/' $CFILE | sort) >> $BFILE
+        grep -v {{ $CFILE | grep -v "#" >> $BFILE
+        entry=cia
+    else
+        args[$comp]="$ARGS `sort $CIAENV | join -t= - <(perl -nE 'say $1 if /(export \w+)=.*{{/' $CFILE | sort) |
+            sed s/export/-e/g | tr '\n' ' '`"
+        grep -v "#" $CFILE >> $BFILE
+        entry=entrypoint
+    fi
+
+    # transfer resource files
+    cp $EFILE /tmp/build.$comp.$OUTDIR/entrypoint
+    cat $DFILE | awk /COPY/{print\"./\"\$2} |
+        xargs tar cvf - $DFILE /tmp/build.$comp.$OUTDIR/* |
+        ssh $BUILDBOX tar xvf - --directory $TEMPDIR
+    popd
+
+    denv="export PATH=$DOCKERPATH:\$PATH
+        eval \$(docker-machine env default)
+    "
+    # run docker build
+    echo "cd $TEMPDIR
+        $denv
+        cp $DFILE Dockerfile
+        mkdir -p $OUTDIR
+        mv -v ./tmp/build.$comp.$OUTDIR/* $OUTDIR
+        echo WORKDIR / >> Dockerfile
+        find $OUTDIR -type f | xargs -n1 -I{} echo COPY {} {} >> Dockerfile
+        echo ENTRYPOINT [\\\"/$OUTDIR/$entry\\\"] >> Dockerfile
+        echo CMD [\\\"--dry-run\\\"] >> Dockerfile
+        cat Dockerfile
+        echo all: > Makefile
+        docker build --tag $comp:$buildtime ." | ssh -T $BUILDBOX
+
+    images[$comp]=`echo "$denv
+        docker images -q "$comp:$buildtime | ssh -T $BUILDBOX`
+    file=/tmp/docker-$comp-${images[$comp]}
+    if [[ -f $file && "CACHE" != "" ]]; then
+        echo using cached image $file
+    else
+        echo saving image to $file, this may take a minute
+        echo "$denv docker save $comp:$buildtime | gzip -1" |
+            ssh -T $BUILDBOX > $file
+    fi
+    echo deleting temp dir $TEMPDIR on $BUILDBOX
+    ssh -T $BUILDBOX rm -rfv $TEMPDIR
+    if [ "CACHE" = "" ]; then
+        rm -rfv /tmp/build.$comp.$OUTDIR
+    fi
+    echo done building $comp
+done
+
+
+# part 2 -- load on target servers
+
+ls -l /tmp/docker-*
+for target in `echo $TARGETS | tr ',' ' '`; do
+    echo deploying $COMPONENTS on $target
+    cmd_load=
+    cmd_clean=
+    cmd_tag=
+    cmd_run=
+    cmd_stop=
+    for comp in $comps; do
+        img=${images[$comp]}
+        file=/tmp/docker-$comp-$img
+        commit=${commits[$comp]}
+        if [ "$WIPE" != "" ]; then
+            rm -v $file*
+            cmd_clean="$cmd_clean
+                rm -v $file*
+            "
+            continue
+        fi
+        rsync -av $file $target:$file
+        if [ "$CACHE" = "" ]; then
+            rm -v $file
+            cmd_clean="$cmd_clean
+                rm -v $file
+            "
+        fi
+
+        cmd_load="$cmd_load
+            echo loading $comp from $file
+            gzip -cd $file | $SUDO docker load
+            $SUDO docker tag -f $img $comp:$buildtime
+        "
+        cmd_tag="$cmd_tag
+            echo tagging $comp $img as latest, commit $commit
+            $SUDO docker tag -f $img $comp:$latest
+            $SUDO docker tag -f $img $comp:$commit
+        "
+        if [ "$RUN" != "" ]; then
+            maps="`grep ^$comp: $GITROOT/$RESOURCES/resource-mapping | cut -f2-100 -d:`"
+            cmd_run="$cmd_run
+                echo using mapping [$maps] for $comp
+                echo starting $comp:$buildtime
+                echo [$SUDO docker run --name=$comp-$buildtime -d ${args[$comp]} $maps $comp:$buildtime _]
+                $SUDO docker run --name=$comp-$buildtime -d ${args[$comp]} $maps $comp:$buildtime _
+            "
+            cmd_stop="$cmd_stop
+                for container in \`$SUDO docker ps | grep \" $comp:\" | awk {print\\\\\$1}\`; do
+                    echo stopping container \$container for $comp, this may take up to 5 minutes
+                    $SUDO docker stop --time=300 \$container
+                done
+            "
+        fi
+    done
+    ssh -tq $target "
+        $cmd_load
+        $cmd_clean
+        $cmd_tag
+        $cmd_stop
+        $cmd_run
+    "
+    echo done deploying $COMPONENTS on $target
+done

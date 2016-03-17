@@ -17,11 +17,11 @@ module.exports = function(router) {
   // variable to check if we are in "debug" mode.
   router.all('/', function(req, res) {
     var templateParams = {
-      endpoint      : global.conf.settings.javascriptEndpoint + '/v2/',
+      endpoint      : global.conf.javascriptEndpoint + '/v2/',
       localDev      : global.DEVELOPMENT,
-      internal      : req.is_internal,
+      internal      : true,
       ad_network_id : req.body.ad_network_id || req.session.ad_network_id,
-      environment   : global.conf.settings.environment,
+      environment   : global.conf.environment,
       session_token : req.session.session_token
     };
 
@@ -33,98 +33,98 @@ module.exports = function(router) {
 
   });
 
-  router.get('/partners', function(req, res) {
-    if (req.session.ad_network_id) {
-      res.redirect('/');
-      return;
-    }
-
-    req.api.get('partner/find', { fields: 'ad_network_id,name', limit: 0})
-      .then(function(partnerData) {
-
-        var templateParams = {
-          debug         : false,
-          localDev      : global.DEVELOPMENT,
-          partners      : partnerData.data,
-          loginEndpoint : global.conf.settings.loginEndpoint,
-          errorMessage  : req.session.flashErrorMessage || '',
-          invalid       : false
-        };
-
-        delete req.session.flashErrorMessage;
-
-        res.render('wrong-context', templateParams);
-      });
-  });
-
-  router.get('/invalid', function(req, res) {
-    if (req.session.ad_network_id) {
-      res.redirect('/');
-      return;
-    }
-
-    var templateParams = {
-      debug         : false,
-      localDev      : global.DEVELOPMENT,
-      loginEndpoint : global.conf.settings.loginEndpoint,
-      errorMessage  : req.session.flashErrorMessage || '',
-      invalid       : true,
-      partners      : []
-    };
-
-    delete req.session.flashErrorMessage;
-
-    res.render('wrong-context', templateParams);
-  });
-
-  router.get('/acceptTerms', function(req, res) {
-
-    if (_.isDate(req.session.tos) || Date.parse(req.session.tos)) {
-      res.redirect('/');
-      return;
-    }
-
-    var templateParams = {
-      debug         : false,
-      localDev      : global.DEVELOPMENT,
-      loginEndpoint : global.conf.settings.loginEndpoint,
-      now           : new Date(),
-      res           : res
-    };
-
-    delete req.session.flashErrorMessage;
-
-    res.render('tos-agreement', templateParams);
-  });
-
-  router.get('/accepted', function(req, res) {
-
-    if (_.isDate(req.session.tos) || Date.parse(req.session.tos)) {
-      res.redirect('/');
-      return;
-    }
-
-    req.api.get('account/agree_to_tos', { certification_authority: true, service_agreement: true})
-      .then(function(response) {
-        // just need session.tos to contain a date, never actually check what date it is.
-        req.session.tos = new Date();
-        res.redirect('/auth/login/' + req.session.session_token);
-      }).catch(function() {
-        res.redirect('/acceptTerms')
-      });
-  });
-
-  router.get('/partnerTerms', function(req, res) {
-
-    var templateParams = {
-      debug         : false,
-      localDev      : global.DEVELOPMENT,
-      loginEndpoint : global.conf.settings.loginEndpoint
-    };
-
-    delete req.session.flashErrorMessage;
-
-    res.render('partner-terms', templateParams);
-  });
+//   router.get('/partners', function(req, res) {
+//     if (req.session.ad_network_id) {
+//       res.redirect('/');
+//       return;
+//     }
+//
+//     req.api.get('partner/find', { fields: 'ad_network_id,name', limit: 0})
+//       .then(function(partnerData) {
+//
+//         var templateParams = {
+//           debug         : false,
+//           localDev      : global.DEVELOPMENT,
+//           partners      : partnerData.data,
+//           loginEndpoint : global.conf.loginEndpoint,
+//           errorMessage  : req.session.flashErrorMessage || '',
+//           invalid       : false
+//         };
+//
+//         delete req.session.flashErrorMessage;
+//
+//         res.render('wrong-context', templateParams);
+//       });
+//   });
+//
+//   router.get('/invalid', function(req, res) {
+//     if (req.session.ad_network_id) {
+//       res.redirect('/');
+//       return;
+//     }
+//
+//     var templateParams = {
+//       debug         : false,
+//       localDev      : global.DEVELOPMENT,
+//       loginEndpoint : global.conf.loginEndpoint,
+//       errorMessage  : req.session.flashErrorMessage || '',
+//       invalid       : true,
+//       partners      : []
+//     };
+//
+//     delete req.session.flashErrorMessage;
+//
+//     res.render('wrong-context', templateParams);
+//   });
+//
+//   router.get('/acceptTerms', function(req, res) {
+//
+//     if (_.isDate(req.session.tos) || Date.parse(req.session.tos)) {
+//       res.redirect('/');
+//       return;
+//     }
+//
+//     var templateParams = {
+//       debug         : false,
+//       localDev      : global.DEVELOPMENT,
+//       loginEndpoint : global.conf.loginEndpoint,
+//       now           : new Date(),
+//       res           : res
+//     };
+//
+//     delete req.session.flashErrorMessage;
+//
+//     res.render('tos-agreement', templateParams);
+//   });
+//
+//   router.get('/accepted', function(req, res) {
+//
+//     if (_.isDate(req.session.tos) || Date.parse(req.session.tos)) {
+//       res.redirect('/');
+//       return;
+//     }
+//
+//     req.api.get('account/agree_to_tos', { certification_authority: true, service_agreement: true})
+//       .then(function(response) {
+//         // just need session.tos to contain a date, never actually check what date it is.
+//         req.session.tos = new Date();
+//         res.redirect('/auth/login/' + req.session.session_token);
+//       }).catch(function() {
+//         res.redirect('/acceptTerms')
+//       });
+//   });
+//
+//   router.get('/partnerTerms', function(req, res) {
+//
+//     var templateParams = {
+//       debug         : false,
+//       localDev      : global.DEVELOPMENT,
+//       loginEndpoint : global.conf.loginEndpoint
+//     };
+//
+//     delete req.session.flashErrorMessage;
+//
+//     res.render('partner-terms', templateParams);
+//   });
 
 };

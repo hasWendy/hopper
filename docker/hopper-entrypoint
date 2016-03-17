@@ -1,0 +1,10 @@
+#!/bin/bash
+
+trap 'kill -TERM $PID; wait $PID' TERM
+
+cd /data/www/hopper
+
+npm run start:dev &
+
+PID=$!
+wait $PID

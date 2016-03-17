@@ -1,13 +1,8 @@
 import React from 'react/addons';
-import BaseComponent from 'lib/baseComponent';
-import {autobind} from 'lib/decorators';
 import Header from 'txl/header/Header';
-import {LAYER_2} from '../../../styles/layers';
-import {combineStyles} from 'txl/styles/helpers';
 import moment from 'moment';
 
-@autobind
-export default class AppHeader extends BaseComponent {
+export default class AppHeader extends React.Component {
   constructor(props) {
     super(props);
 
@@ -25,17 +20,17 @@ export default class AppHeader extends BaseComponent {
       }
     };
 
-    let hopper = "HOPPER - HasOffers Perspective into Product Event Report";
+    let hopper = "HOPPER - HasOffers Perspective into Product Event Report | " + this.date;
     let hopperMsg = '"Life was simple before World War II. After that, we had systems."  - Grace Hopper';
 
     return (
-      <div style={combineStyles(styles.tHeader, LAYER_2)}>
+      <div style={styles.tHeader}>
         <Header
           ref='header'
           product='TMC'
           logo={{}}
           title={hopper}
-          client={this.date}>
+          client={hopperMsg}>
         </Header>
       </div>
     );

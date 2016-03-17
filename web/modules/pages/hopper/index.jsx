@@ -1,14 +1,12 @@
 import React from 'react';
-import BaseComponent from 'lib/baseComponent';
 import {Chart} from 'react-google-charts';
 import imm from 'immutable';
 import $ from 'jquery';
-import Table from './Table.jsx';
+import Table from 'components/Table';
 import Page from 'pages/Page';
-import {gridUnits as gu} from 'txl/styles/helpers';
 import moment from 'moment';
 
-export default class Hopper extends BaseComponent {
+export default class Hopper extends React.Component {
   constructor(props) {
     super(props);
 
@@ -26,9 +24,17 @@ export default class Hopper extends BaseComponent {
       this.getData('days');
       this.getData('counts/topbrands');
     });
-    // this.getBrandData();
-    this.mapTimer = setInterval(() => {
+
+    this.chartTimer = setInterval(() => {
       clearTimeout(this.timeout);
+      this.setState({
+        isProfit :  !this.state.isProfit
+      }, () => {
+        this.getData('days');
+      });
+    }, 300000);
+
+    this.mapTimer = setInterval(() => {
       if (this.state.isProfit) {
         this.getData('revenue/countries');
         this.getData('profit/topbrands');
@@ -37,14 +43,6 @@ export default class Hopper extends BaseComponent {
         this.getData('counts/topbrands');
       }
     }, 60000);
-
-    this.chartTimer = setInterval(() => {
-      this.setState({
-        isProfit :  !this.state.isProfit
-      }, () => {
-        this.getData('days');
-      });
-    }, 300000);
   }
 
   getData(query) {
@@ -57,10 +55,11 @@ export default class Hopper extends BaseComponent {
     if (query === 'days') {
       let graphData = [];
       for (var key in results.days) {
+        // remove once data is cleaned out
         if (key !== '2016-03-01' && key !== '2016-03-07') {
           let data = [];
           if (this.state.isProfit) {
-            data = [moment(key).toDate(), results.days[key]['payout_cents'], results.days[key]['profit_cents'], results.days[key]['revenue_cents']];
+            data = [moment(key).toDate(), (results.days[key]['payout_cents'] * 100), (results.days[key]['profit_cents'] * 100), (results.days[key]['revenue_cents'] * 100)];
           } else {
             data = [moment(key).toDate(), results.days[key]['clicks'], results.days[key]['conversions'], results.days[key]['impressions']];
           }
@@ -105,12 +104,21 @@ export default class Hopper extends BaseComponent {
 
     var options = {
       hAxis: {title: 'Days'},
-      vAxis: {title: this.state.isProfit ? 'Profit (cents)' : 'Counts'},
+      vAxis: {
+        title: this.state.isProfit ? 'Total (USD)' : 'Total (Count)'
+        // viewWindowMode: 'explicit',
+        // viewWindow: {
+        //   min: 0
+        // }
+      },
       backgroundColor : {
         fill : '#F5F6F7',
         opacity : 0
       },
-      legend: 'top'
+      legend: 'top',
+      format: {
+
+      }
     };
 
     var graphColumns = [
@@ -119,15 +127,15 @@ export default class Hopper extends BaseComponent {
         type  : 'date'
       },
       {
-        label : 'Clicks',
+        label : this.state.isProfit ? 'Payout' : 'Clicks',
         type  : 'number'
       },
       {
-        label : 'Conversions',
-        type: 'number'
+        label : this.state.isProfit ? 'Profit' : 'Conversions',
+        type  : 'number'
       },
       {
-        label : 'Impressions',
+        label : this.state.isProfit ? 'Revenue' : 'Impressions',
         type  : 'number'
     }];
 
@@ -137,7 +145,7 @@ export default class Hopper extends BaseComponent {
         type  : 'string'
       },
       {
-        label : 'Payout',
+        label : this.state.isProfit ? 'Payout' : 'Events',
         type  : 'number'
       }
     ];
@@ -145,7 +153,7 @@ export default class Hopper extends BaseComponent {
     var mapOptions = {
       colorAxis : {
         minValue  : 0,
-        colors    : ['#E6F2FF', '#001C3D']
+        colors    : ['#D4EDFF', '#001C3D']
       },
       backgroundColor : {
         fill : '#F5F6F7',
@@ -156,13 +164,15 @@ export default class Hopper extends BaseComponent {
     return (
       <Page>
         <div style={STYLES.table}>
-          <div style={{flex: '0.65', border: '0px solid black', display: 'flex', flexDirection: 'column'}}>
-            <h3 style={{margin: '10px'}}>Top Performers by {this.state.isProfit ? 'Profit' : 'Total Events'}</h3>
-            <Table items={this.state.chartData} />
+          <div style={{flex: '0.65', border: '0px solid black', display: 'flex', flexDirection: 'column', borderBottom: '1px solid black'}}>
+            <h3 style={{margin: '10px'}}>Today's Top Performers by {this.state.isProfit ? 'Profit' : 'Events'}</h3>
+            <Table
+              items={this.state.chartData}
+              isProfit={this.state.isProfit} />
           </div>
-          <div style={{display: 'flex', flex: '1', flexDirection: 'column', border: '0px solid black'}}>
+          <div style={{display: 'flex', flex: '1', flexDirection: 'column', marginLeft: 10}}>
             <div style={{flex: '1'}}>
-              <h3 style={{margin: '10px'}}>{this.state.isProfit ? 'Profits' : 'Events'} Around the World</h3>
+              <h3 style={{margin: '10px'}}>Today's {this.state.isProfit ? 'Profits' : 'Events'} Around the World</h3>
               <Chart
                 chartType='GeoChart'
                 rows={this.state.mapData}
