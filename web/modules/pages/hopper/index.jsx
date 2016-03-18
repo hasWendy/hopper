@@ -46,7 +46,7 @@ export default class Hopper extends React.Component {
   }
 
   getData(query) {
-    $.get('http://hil-dev:8080/' + query, (results) => {
+    $.get('http://dh-hillaryp01-dev.sea3.office.priv:8080/' + query, (results) => {
       this._handleData(query, results);
     });
   }
