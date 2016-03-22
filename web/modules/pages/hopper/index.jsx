@@ -36,7 +36,7 @@ export default class Hopper extends React.Component {
 
     this.mapTimer = setInterval(() => {
       if (this.state.isProfit) {
-        this.getData('revenue/countries');
+        this.getData('profit/countries');
         this.getData('profit/topbrands');
       } else {
         this.getData('counts/countries');
@@ -55,16 +55,14 @@ export default class Hopper extends React.Component {
     if (query === 'days') {
       let graphData = [];
       for (var key in results.days) {
-        // remove once data is cleaned out
-        if (key !== '2016-03-01' && key !== '2016-03-07') {
-          let data = [];
-          if (this.state.isProfit) {
-            data = [moment(key).toDate(), (results.days[key]['payout_cents'] * 100), (results.days[key]['profit_cents'] * 100), (results.days[key]['revenue_cents'] * 100)];
-          } else {
-            data = [moment(key).toDate(), results.days[key]['clicks'], results.days[key]['conversions'], results.days[key]['impressions']];
-          }
-          graphData.push(data);
+        let data = [];
+        if (this.state.isProfit) {
+          console.log(results.days[key]['payout_cents'] * 100);
+          data = [moment(key).toDate(), (results.days[key]['payout_cents'] * 100), (results.days[key]['profit_cents'] * 100), (results.days[key]['revenue_cents'] * 100)];
+        } else {
+          data = [moment(key).toDate(), results.days[key]['clicks'], results.days[key]['conversions'], results.days[key]['impressions']];
         }
+        graphData.push(data);
       }
 
       this.setState({ graphData });

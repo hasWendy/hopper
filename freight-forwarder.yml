@@ -1,0 +1,53 @@
+---
+team: 'ho_fn'
+project: 'hopper'
+repository: 'git@github.com:hasWendy/hopper.git'
+
+app:
+  build: './'
+
+registries:
+  tune_development: &default_registry
+    address: 'https://docker-dev.ops.tune.com'
+    verify: false
+  default: *default_registry
+
+environments:
+
+  # hosts
+  local: &local
+    address: 'https://192.168.99.100:2376'
+    ssl_cert_path: '/Users/wendy/.docker/machine/machines/dev'
+    verify: false
+  jenkins_sta: &jenkins_sta
+    address: 'https://dh-jenkins-docker02-dev.sea3.office.priv:2376'
+    ssl_cert_path: '/etc/docker/certs/client/staging/'
+    verify: false
+  partnersapp_sta: &partnersapp_sta
+    address: 'https://h-partnerapp01-sta.use01.ho.priv:2376'
+    ssl_cert_path: '/etc/docker/certs/client/staging/'
+    verify: false
+
+  development:
+    local:
+      hosts:
+        default:
+          - *local
+      deploy:
+        app:
+          image: tune_development/ho_fn/jurassic-park:latest
+          ports:
+            - "80:8080"
+
+  staging:
+    use01:
+      hosts:
+        default:
+          - *partnersapp_sta
+        export:
+          - *jenkins_sta
+      deploy:
+        app:
+          image: tune_development/ho_fn/jurassic-park:use01-staging-latest
+          ports:
+            - "80:8080"
