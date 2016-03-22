@@ -17,7 +17,7 @@ environments:
   # hosts
   local: &local
     address: 'https://192.168.99.100:2376'
-    ssl_cert_path: '/Users/wendy/.docker/machine/machines/dev'
+    ssl_cert_path: '/Users/wendy/.docker/machine/machines/default'
     verify: false
   jenkins_sta: &jenkins_sta
     address: 'https://dh-jenkins-docker02-dev.sea3.office.priv:2376'
